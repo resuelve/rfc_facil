@@ -132,7 +132,7 @@ defmodule RfcFacil.NaturalPerson do
     "Ñ" => "38"
   }
 
-  @inconvenient %{
+  @forbidden_words %{
     "BUEI" => "BUEX",
     "BUEY" => "BUEX",
     "CACA" => "CACX",
@@ -372,7 +372,6 @@ defmodule RfcFacil.NaturalPerson do
   # 1. Si es nombre unico devuelve el mismo
   # 2. Si es compuesto pasa por compound_name
   defp get_names(string) do
-    name = trim_words(string)
     split =
       trim_words(string)
       |> String.split(" ")
@@ -380,7 +379,7 @@ defmodule RfcFacil.NaturalPerson do
     if length(split) > 1 do
       compound_name(Enum.at(split, 0), Enum.at(split, 1))
     else
-      name
+      trim_words(string)
     end
   end
 
