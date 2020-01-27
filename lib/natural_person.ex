@@ -5,7 +5,9 @@ defmodule RfcFacil.NaturalPerson do
 
   @vowels ~w(a e i o u)
 
-  @avoidable_words ~w(de el y del los la las)
+  @avoidable_words ~w(de el y del los la las da das der di die dd le les mac mc van von)
+
+  @avoidable_names ["maria", "jose", "ma"]
 
   @alphabet %{
     " " => "00",
@@ -46,7 +48,8 @@ defmodule RfcFacil.NaturalPerson do
     "X" => "37",
     "Y" => "38",
     "Z" => "39",
-    "Ñ" => "40"
+    "Ñ" => "40",
+    "Ñ" => "40" # No tocar: Ñ con otra codificación identificada
   }
 
   @homonymy %{
@@ -125,7 +128,50 @@ defmodule RfcFacil.NaturalPerson do
     "Y" => "35",
     "Z" => "36",
     " " => "37",
-    "Ñ" => "38"
+    "Ñ" => "38",
+    "Ñ" => "38"
+  }
+
+  @inconvenient %{
+    "BUEI" => "BUEX",
+    "BUEY" => "BUEX",
+    "CACA" => "CACX",
+    "CACO" => "CACX",
+    "CAGA" => "CAGX",
+    "CAGO" => "CAGX",
+    "CAKA" => "CAKX",
+    "COGE" => "COGX",
+    "COJA" => "COJX",
+    "COJE" => "COJX",
+    "COJI" => "COJX",
+    "COJO" => "COJX",
+    "CULO" => "CULX",
+    "FETO" => "FETX",
+    "GUEY" => "GUEX",
+    "JOTO" => "JOTX",
+    "KACA" => "KACX",
+    "KACO" => "KACX",
+    "KAGA" => "KAGX",
+    "KAGO" => "KAGX",
+    "KOGE" => "KOGX",
+    "KOJO" => "KOJX",
+    "KAKA" => "KAKX",
+    "KULO" => "KULX",
+    "MAME" => "MAMX",
+    "MAMO" => "MAMX",
+    "MEAR" => "MEAX",
+    "MEON" => "MEOX",
+    "MION" => "MIOX",
+    "MOCO" => "MOCX",
+    "MULA" => "MULX",
+    "PEDA" => "PEDX",
+    "PEDO" => "PEDX",
+    "PENE" => "PENX",
+    "PUTA" => "PUTX",
+    "PUTO" => "PUTX",
+    "QULO" => "QULX",
+    "RATA" => "RATX",
+    "RUIN" => "RUIX"
   }
 
   @doc """
@@ -138,9 +184,12 @@ defmodule RfcFacil.NaturalPerson do
     lastname = normalize(lastname)
     lastname2 = normalize(lastname2)
 
-    rfc =
-      String.upcase(name_part(name, lastname, lastname2)) <>
-        birth_part(birthdate) <> homonymy_part(name, lastname, lastname2)
+    first_step = String.upcase(name_part(name, lastname, lastname2))
+
+    alphabet_key =
+      if Map.has_key?(@inconvenient, first_step), do: Map.get(@inconvenient, first_step), else: first_step
+
+    rfc = alphabet_key <> birth_part(birthdate) <> homonymy_part(name, lastname, lastname2)
 
     digit =
       rfc
@@ -157,21 +206,32 @@ defmodule RfcFacil.NaturalPerson do
     lastname = trim_words(lastname)
     lastname2 = trim_words(lastname2)
     length = String.length(lastname)
+    check_name = get_names(name)
 
     cond do
+      # Sin apellido paterno
+      lastname in ["", nil] ->
+        String.slice(lastname2, 0, 2) <> String.slice(check_name, 0, 2)
+
       # Sin apellido materno
       lastname2 in ["", nil] ->
-        String.slice(lastname, 0, 2) <> String.slice(name, 0, 2)
+        String.slice(lastname, 0, 2) <> String.slice(check_name, 0, 2)
 
       # Apellido paterno demasiado pequeño
       length <= 2 ->
-        String.slice(lastname, 0, 1) <>
+        # Si la primera es consonante y la segunta es vocal aplica la regla basica de RFC
+        # Caso contrario aplica regla de apellido corto
+        if check_letter(lastname, 0, 1) === false and check_letter(lastname, 1, 1) === true do
+          _name_part(check_name, lastname, lastname2)
+        else
+          String.slice(lastname, 0, 1) <>
           String.slice(lastname2, 0, 1) <>
-          String.slice(name, 0, 2)
+          String.slice(check_name, 0, 2)
+        end
 
       # Caso normal
       true ->
-        _name_part(name, lastname, lastname2)
+        _name_part(check_name, lastname, lastname2)
     end
   end
 
@@ -198,10 +258,10 @@ defmodule RfcFacil.NaturalPerson do
       |> String.downcase()
       |> (&Enum.member?(@avoidable_words, &1)).()
       |> if do
-        acc
-      else
-        "#{acc} #{word}"
-      end
+           acc
+         else
+           "#{acc} #{word}"
+         end
       |> String.trim()
     end)
   end
@@ -215,13 +275,15 @@ defmodule RfcFacil.NaturalPerson do
 
   #  Regresa la clave diferenciadora de homonimia
   defp homonymy_part(name, lastname, lastname2) do
-    "#{lastname} #{lastname2} #{name}"
-    |> String.upcase()
-    |> String.graphemes()
-    |> Enum.map_join(fn char -> Map.get(@alphabet, char) end)
-    |> String.graphemes()
-    |> homonymy_operation()
+      "#{lastname} #{lastname2} #{name}"
+      |> String.upcase()
+      |> String.graphemes()
+      |> Enum.map(fn char -> Map.get(@alphabet, char) end)
+      |> Enum.join()
+      |> String.graphemes()
+      |> homonymy_operation()
   end
+
 
   # Calcula el resultado de multiplicar la lista de números
   # Se efectuaran las multiplicaciones de los números tomados de
@@ -269,13 +331,14 @@ defmodule RfcFacil.NaturalPerson do
       |> Enum.map(fn char -> Map.get(@verification, char) end)
       |> Enum.with_index()
       |> Enum.reduce(0, fn {number, index}, acc ->
-        String.to_integer(number) * (13 - index) + acc
-      end)
+           String.to_integer(number) * (13 - index) + acc
+         end)
       |> Kernel.rem(11)
 
     cond do
       number == 0 -> "0"
-      number in [1, 10] -> "A"
+      number == 1 -> "A"
+      number in [2, 11] -> to_string(11 - number)
       true -> to_string(11 - number)
     end
   end
@@ -289,6 +352,12 @@ defmodule RfcFacil.NaturalPerson do
     end
   end
 
+  # Verifica las primeras 2 letras si es vocal o no
+  defp check_letter(word, start, amount) do
+    result = String.slice(word, start, amount)
+    if Enum.member?(@vowels, result), do: true, else: false
+  end
+
   # Quita las tildes
   defp normalize(string) do
     string
@@ -296,6 +365,33 @@ defmodule RfcFacil.NaturalPerson do
     |> String.codepoints()
     |> Enum.reject(&Regex.match?(~r/[^"̃A-Za-z&\s]/u, &1))
     |> Enum.join()
-    |> String.downcase()
+    |> String.downcase
+  end
+
+  # Obtenemos el primer o segundo nombre
+  # 1. Si es nombre unico devuelve el mismo
+  # 2. Si es compuesto pasa por compound_name
+  defp get_names(string) do
+    name = trim_words(string)
+    split =
+      trim_words(string)
+      |> String.split(" ")
+
+    if length(split) > 1 do
+      compound_name(Enum.at(split, 0), Enum.at(split, 1))
+    else
+      name
+    end
+  end
+
+  # Verifica que el primer nombre no sea jose, maria, ma
+  # 1. Si el primer nombre existe en la lista devuelve el segundo nombre
+  # 2. Si el primero no existe devuelve el primero
+  defp compound_name(first_name, second_name) do
+    if Enum.member?(@avoidable_names, first_name) === true do
+      second_name
+    else
+      first_name
+    end
   end
 end
