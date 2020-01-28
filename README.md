@@ -10,7 +10,7 @@ by adding `rfc_facil` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:rfc_facil, "~> 0.1.0"}
+    {:rfc_facil, "~> 0.1.2"}
   ]
 end
 ```

@@ -187,7 +187,7 @@ defmodule RfcFacil.NaturalPerson do
     first_step = String.upcase(name_part(name, lastname, lastname2))
 
     alphabet_key =
-      if Map.has_key?(@inconvenient, first_step), do: Map.get(@inconvenient, first_step), else: first_step
+      if Map.has_key?(@forbidden_words, first_step), do: Map.get(@forbidden_words, first_step), else: first_step
 
     rfc = alphabet_key <> birth_part(birthdate) <> homonymy_part(name, lastname, lastname2)
 
