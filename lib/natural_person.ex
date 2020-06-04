@@ -317,7 +317,7 @@ defmodule RfcFacil.NaturalPerson do
     next_number = String.to_integer(next)
 
     "#{past_number}#{next_number}"
-    |> String.strip()
+    |> String.trim()
     |> String.to_integer()
     |> Kernel.*(next_number)
     |> Kernel.+(_homonymy_operation(remain, next_number))
@@ -373,7 +373,8 @@ defmodule RfcFacil.NaturalPerson do
   # 2. Si es compuesto pasa por compound_name
   defp get_names(string) do
     split =
-      trim_words(string)
+      string
+      |> trim_words()
       |> String.split(" ")
 
     if length(split) > 1 do
