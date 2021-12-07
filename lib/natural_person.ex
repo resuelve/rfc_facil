@@ -243,7 +243,7 @@ defmodule RfcFacil.NaturalPerson do
     {first_char, remainder} = String.next_grapheme(lastname)
 
     first_char <>
-      next_vowel(remainder) <>
+      paternal_surname_letter_2(remainder) <>
       String.slice(lastname2, 0, 1) <>
       String.slice(name, 0, 1)
   end
@@ -340,6 +340,18 @@ defmodule RfcFacil.NaturalPerson do
       number == 1 -> "A"
       number in [2, 11] -> to_string(11 - number)
       true -> to_string(11 - number)
+    end
+  end
+
+  # Regresa la siguiente vocal, o si no hay, la segunda letra
+  defp paternal_surname_letter_2(paternal_surname) do
+    vowel = next_vowel(paternal_surname)
+
+    if vowel do
+      vowel
+    else
+      {next_letter, _} = String.next_grapheme(paternal_surname)
+      next_letter
     end
   end
 
