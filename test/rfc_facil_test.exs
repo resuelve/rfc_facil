@@ -40,6 +40,11 @@ defmodule RfcFacilTest do
     assert rfc == "OACR661121B47"
   end
 
+  test "calculate RFC for people with only one vowel in their paternal last name" do
+    {:ok, rfc} = RfcFacil.for_natural_person("Roberto", "Orff", "Carballo", "1966-11-21")
+    assert rfc == "ORCR661121IL0"
+  end
+
   test "calculate normal RFC" do
     {:ok, rfc} = RfcFacil.for_natural_person("Erick", "Madrid", "Cruz", "1989-03-09")
     assert rfc == "MACE890309659"
