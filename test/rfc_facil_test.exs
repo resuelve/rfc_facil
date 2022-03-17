@@ -49,4 +49,19 @@ defmodule RfcFacilTest do
     {:ok, rfc} = RfcFacil.for_natural_person("Erick", "Madrid", "Cruz", "1989-03-09")
     assert rfc == "MACE890309659"
   end
+
+  test "should build rfc for a natural person" do
+    {:ok, rfc} = RfcFacil.for_natural_person("Josué", "Zarzosa", "de la Torre", "1987-08-05")
+    assert rfc == "ZATJ870805CK6"
+  end
+
+  test "should build rfc for a natural person with verification digit 1" do
+    {:ok, rfc} = RfcFacil.for_natural_person("Eliud", "Orozco", "Gomez", "1952-07-11")
+    assert rfc == "OOGE520711151"
+  end
+
+  test "should build rfc for a natural person with verification digit A" do
+    {:ok, rfc} = RfcFacil.for_natural_person("Saturnina", "Angel", "Cruz", "1921-11-12")
+    assert rfc == "AECS211112JPA"
+  end
 end
